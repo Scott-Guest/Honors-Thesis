@@ -56,7 +56,7 @@
 %% Some recommended packages.
 \usepackage{booktabs}   %% For formal tables:
                         %% http://ctan.org/pkg/booktabs
-\usepackage{subfig} %% For complex figures with subfigures/subcaptions
+\usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
 \usepackage[export]{adjustbox}
 
@@ -98,7 +98,7 @@
 	% keywordstyle=\sffamily,
 	commentstyle=\itshape\ttfamily\color{gray}, 
 	stringstyle=\ttfamily\color{purple},
-	mathescape=false,escapechar=\#,
+	mathescape=true,escapechar=\#,
 	numbers=left, numberstyle=\scriptsize\color{gray}\ttfamily, language=ML, showspaces=false,showstringspaces=false,xleftmargin=15pt, 
 	morekeywords={string, float, int, bool, match},
 	classoffset=0,belowskip=\smallskipamount, aboveskip=\smallskipamount,
@@ -106,6 +106,8 @@
 }
 \newcommand{\li}[1]{\lstinline[basicstyle=\ttfamily\fontsize{9pt}{1em}\selectfont]{#1}}
 \newcommand{\lismall}[1]{\lstinline[basicstyle=\ttfamily\fontsize{9pt}{1em}\selectfont]{#1}}
+
+\input{macros}
 
 \begin{document}
 
@@ -159,6 +161,7 @@
 \maketitle
 
 \input{introduction}
+\input{background}
 \input{pattern-matching}
 \input{mechanization}
 

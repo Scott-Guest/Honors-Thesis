@@ -1,0 +1,48 @@
+\section{Background}
+
+Let us begin by reviewing pattern matching in the context of languages without holes. Such a feature should be familiar to many modern developers, as it has seen widespread adoption in typed functional languages such as OCaml \cite{leroy:hal-00930213}, Haskell \cite{marlow2010haskell}, and Elm \cite{Elm}, and more recently, has also been implemented to varying degree in mainstream imperative languages including Rust \cite{10.5555/3271463} and Python \cite{pep634}, and has also been proposed for a future version of C++ \cite{murzin2019pattern}.
+
+At a high-level, \emph{structural pattern matching} allows one to conditionally branch based on the "shape" of a piece of data, while simultaneously binding sub-terms of the data to specified variable names. Concretely, this accomplished through a \li{match} expression consisting of a \emph{scrutinee}, i.e. the expression whose shape we inspect, and a series of \emph{rules}. Each rule contains a \emph{pattern} describing the desired form of the data for that particular case, as well as a \emph{branch expression} indicating the result of evaluation in that case. The branch expression may reference the variables bound  in the pattern.
+
+\begin{figure}
+	\begin{subfigure}{.45\textwidth}
+		\begin{lstlisting}[numbers=none]
+			match tree
+			| Node([]) -> Empty
+			| Node([x]) -> Node([f x, Empty])
+			| Node([x, y]) -> Node([f x, f y])
+			| Node(x::y::tl) -> Node(
+			[f x, f (Node (y::tl))])
+			| Leaf x -> Leaf x
+			| Empty -> Empty
+			end
+		\end{lstlisting}
+		\caption{Exhaustive + Irredundant\label{fig:basic-examples-correct}}
+	\end{subfigure}
+	\begin{subfigure}{.5\textwidth}
+		\begin{lstlisting}[numbers=none]
+			match tree
+			| Node(x::y::tl) -> Node(
+			[f x, f (Node (y::tl))])
+			| Node([x, y]) -> Node([f x, f y])
+			| Node([x]) -> Node([f x, Empty])
+			| Node([]) -> Empty
+			| Empty -> Empty
+			end
+			##
+		\end{lstlisting}
+		\caption{Inexhaustive + Redundant (Second Pattern)\label{fig:basic-examples-wrong}}
+	\end{subfigure}
+	\caption{Two examples demonstrating structural pattern matching and common pitfalls.}
+	\label{fig:basic-examples}
+\end{figure}
+
+\autoref{fig:basic-examples-correct} and \autoref{fig:basic-examples-wrong} present pseudocode showcasing this feature. The scrutinee is a variable \li{tree} containing some value of an algebraic datatype. Each pattern is an expression of nested constructors that could possibly match those constructors of the value in \li{tree}, with variable names in a pattern acting similarly to a wildcard. Semantically, the match expression compares the value of \li{tree} against each of these patterns, beginning from the top down. The first pattern accurately describing the constructors in \li{tree} is selected, then variables in the pattern are bound to corresponding sub-terms of \li{tree}, and finally, evaluation continues at the corresponding branch expression. 
+
+Explicitly, assume \li{tree} contains the value \li{Node([Foo(4), Bar(5)])} in \autoref{fig:basic-examples-correct}. Although the first two patterns indeed have an outermost \li{Node} constructor, they are not matched due to the inner list constructors differing from our value. However, the third pattern \li{Node([x, y])} is successfully matched, thereby binding the variable \li{x} to \li{Foo(4)} and the variable \li{y} to \li{Bar(5)}. Correspondingly, the whole term evaluates to \li{Node([f(Foo(4)), f(Bar(5))])}. Note that our value would also match the pattern \li{Node(x::y::tl)}, but this is not selected as \li{Node([x, y])} appears earlier in the sequence.
+
+More than just a useful control flow structure, pattern matching also helps to ensure program correctness. Consider if  the user modifies \autoref{fig:basic-examples-correct} to the program shown in \autoref{fig:basic-examples-wrong}. For our previously discussed value \li{Node([Foo(4), Bar(5)])}, the new ordering of rules results in the pattern \li{Node(x::y::tl)} being matched before the pattern \li{Node([x, y])} is ever considered, changing the overall behavior of the program. In fact, any term which could possibly match \li{Node([x, y])} will instead first match \li{Node(x::y::tl)}, making the pattern later in the sequence entirely \emph{redundant}. Such a bug can be quite subtle, and it would be difficult to detect if our program had instead been formulated using, say, a series of \li{if}-\li{then}-\li{else} expressions. However, with pattern matching, we can easily prevent this by performing \emph{redundancy analysis} -  an algorithm which allows the language to statically detect if any pattern is impossible to match due to it being subsumed by earlier patterns in the sequence. The user can then be notified of a likely bug, and we can eliminate large classes of errors related to code reordering or unused code paths.
+
+Additionally, note that \autoref{fig:basic-examples-wrong} also fails to include the \li{Leaf x} pattern, meaning that certain expressions no longer match any of the given cases. By performing \emph{exhaustiveness analysis}, we can prevent this issue as well, statically checking that every expression of a given type matches at least one of the patterns in a \li{match} expression. As a result, the programmer is forced to handle every possible form of an input, and if they fail to do so, the language can often assist them by generating expressions which are not yet handled \cite{Harper2012}. Again, this enables large classes of bugs to be prevented statically. For example, from a certain viewpoint, common security issues such as null-pointer exceptions can be viewed as a failure to check exhaustiveness. Exhaustiveness also aids refactoring: if a datatype is extended with additional constructors, then the language can statically identify every location where these additional constructors must be handled. 
+
+Anecdotally, the author's found these analyses immensely useful during the development of the Agda mechanization discussed in \autoref{sec:mechanization}. In the context of Agda and other dependently typed theorem provers, exhaustiveness is used to ensure totality, e.g. guaranteeing that every proof handles all necessary cases. When, for example, we added a unit type to our development after an initial mechanization had already been completed, this removed the need to manually track down and identify all proofs with missing cases. Instead, all that was necessary was to handle  one-by-one every non-exhaustiveness error reported by the compiler.

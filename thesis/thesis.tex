@@ -1,0 +1,172 @@
+%% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
+%\documentclass[sigplan,10pt,review,anonymous]{acmart}
+%\settopmatter{printfolios=true,printccs=false,printacmref=false}
+%% For double-blind review submission, w/ CCS and ACM Reference
+%\documentclass[sigplan,review,anonymous]{acmart}\settopmatter{printfolios=true}
+%% For single-blind review submission, w/o CCS and ACM Reference (max submission space)
+%\documentclass[sigplan,review]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
+%% For single-blind review submission, w/ CCS and ACM Reference
+%\documentclass[sigplan,review]{acmart}\settopmatter{printfolios=true}
+%% For final camera-ready submission, w/ required CCS and ACM Reference
+\documentclass[acmsmall]{acmart}\settopmatter{printccs=false,printacmref=false}
+
+
+%% Conference information
+%% Supplied to authors by publisher for camera-ready submission;
+%% use defaults for review submission.
+\acmConference{University of Michigan}{April, 2022}{Ann Arbor, MI, USA}
+\acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
+\acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
+\startPage{1}
+
+%% Copyright information
+%% Supplied to authors (based on authors' rights management selection;
+%% see authors.acm.org) by publisher for camera-ready submission;
+%% use 'none' for review submission.
+\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\copyrightyear{2018}           %% If different from \acmYear
+
+%% Bibliography style
+\bibliographystyle{ACM-Reference-Format}
+%% Citation style
+\citestyle{acmauthoryear}  %% For author/year citations
+%\citestyle{acmnumeric}     %% For numeric citations
+%\setcitestyle{nosort}      %% With 'acmnumeric', to disable automatic
+                            %% sorting of references within a single citation;
+                            %% e.g., \cite{Smith99,Carpenter05,Baker12}
+                            %% rendered as [14,5,2] rather than [2,5,14].
+%\setcitesyle{nocompress}   %% With 'acmnumeric', to disable automatic
+                            %% compression of sequential references within a
+                            %% single citation;
+                            %% e.g., \cite{Baker12,Baker14,Baker16}
+                            %% rendered as [2,3,4] rather than [2-4].
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Note: Authors migrating a paper from traditional SIGPLAN
+%% proceedings format to PACMPL format must update the
+%% '\documentclass' and topmatter commands above; see
+%% 'acmart-pacmpl-template.tex'.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Some recommended packages.
+\usepackage{booktabs}   %% For formal tables:
+                        %% http://ctan.org/pkg/booktabs
+\usepackage{subcaption} %% For complex figures with subfigures/subcaptions
+                        %% http://ctan.org/pkg/subcaption
+\usepackage[export]{adjustbox}
+
+\usepackage[T1]{fontenc} % fix missing font cmtt
+\usepackage{amsmath}
+\let\Bbbk\relax
+\usepackage{amssymb} % Vdash
+\usepackage{graphicx} % rotatebox
+\usepackage{stmaryrd} % llparenthesis
+\usepackage{anyfontsize} % workaround for font size difference warning
+\usepackage{todonotes}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{calc,fit,tikzmark,plotmarks,arrows.meta,positioning,overlay-beamer-styles}
+
+\usepackage{cancel} % slash over symbol
+\usepackage{hyperref}
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+\def\figureautorefname{Fig.}
+\def\lemmaautorefname{Lemma}
+\def\sectionautorefname{Sec.}
+\let\subsectionautorefname\sectionautorefname
+\let\subsubsectionautorefname\sectionautorefname
+\newcommand{\rulesref}[1]{Rules (\ref{#1})}
+\newcommand{\ruleref}[1]{Rule (\ref{#1})}
+
+\usepackage{xcolor}
+\definecolor{hazelgreen}{RGB}{7,63,36}
+\definecolor{hazellightgreen}{RGB}{103,138,97}
+\definecolor{hazelyellow}{RGB}{245,222,179}
+\definecolor{hazellightyellow}{RGB}{254,254,234}
+
+\newcommand{\highlight}[1]{\colorbox{yellow}{$\displaystyle #1$}}
+
+\usepackage{listings}%
+\lstloadlanguages{ML}
+\lstset{tabsize=2, 
+	basicstyle=\fontsize{7.5pt}{1em}\ttfamily, 
+	% keywordstyle=\sffamily,
+	commentstyle=\itshape\ttfamily\color{gray}, 
+	stringstyle=\ttfamily\color{purple},
+	mathescape=true,escapechar=\#,
+	numbers=left, numberstyle=\scriptsize\color{gray}\ttfamily, language=ML, showspaces=false,showstringspaces=false,xleftmargin=15pt, 
+	morekeywords={string, float, int, bool, match},
+	classoffset=0,belowskip=\smallskipamount, aboveskip=\smallskipamount,
+	moredelim=**[is][\color{red}]{SSTR}{ESTR}
+}
+\newcommand{\li}[1]{\lstinline[basicstyle=\ttfamily\fontsize{9pt}{1em}\selectfont]{#1}}
+\newcommand{\lismall}[1]{\lstinline[basicstyle=\ttfamily\fontsize{9pt}{1em}\selectfont]{#1}}
+
+\input{macros}
+
+\begin{document}
+
+%% Title information
+\title{Pattern Matching with Typed Holes}         %% [Short Title] is optional;
+                                        %% when present, will be used in
+                                        %% header instead of Full Title.
+                                        %% contents suppressed with 'anonymous'
+\subtitle{Computer Science Honors Thesis}                     %% \subtitle is optional
+                                        %% can be repeated if necessary;
+                                        %% contents suppressed with 'anonymous'
+
+
+%% Author information
+%% Contents and number of authors suppressed with 'anonymous'.
+%% Each author should be introduced by \author, followed by
+%% \authornote (optional), \orcid (optional), \affiliation, and
+%% \email.
+%% An author may have multiple affiliations and/or emails; repeat the
+%% appropriate command.
+%% Many elements are not rendered, but should be provided for metadata
+%% extraction tools.
+
+%% Author with single affiliation.
+\author{Scott Guest}
+\orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
+\affiliation{
+  \institution{University of Michigan}            %% \institution is required
+}
+\email{sguest@umich.edu}          %% \email is recommended
+
+%% Author with two affiliations and emails.
+\author{Cyrus Omar}
+\affiliation{
+  \institution{University of Michigan}           %% \institution is required
+}
+\email{comar@umich.edu}         %% \email is recommended
+
+
+%% Abstract
+%% Note: \begin{abstract}...\end{abstract} environment must come
+%% before \maketitle command
+\input{abstract}
+%% End of generated code
+
+
+%% \maketitle
+%% Note: \maketitle command must come after title commands, author
+%% commands, abstract environment, Computing Classification System
+%% environment and commands, and keywords command.
+\maketitle
+
+\input{introduction}
+\input{background}
+\input{pattern-matching}
+\input{mechanization}
+
+%% Bibliography
+\newpage
+\bibliography{references.bib}
+
+\end{document}

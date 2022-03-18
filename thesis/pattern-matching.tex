@@ -11,8 +11,6 @@ Most interesting, however, is when different hole fillings give rise to differen
 Thus, when we allow expression and pattern holes, we can no longer determinately say whether an expression matches a given pattern. What was once a binary decision (either $e$ matches $p$ or $e$ does not match $p$) is now a ternary decision: either $e$ must match $p$, $e$ must not match $p$, or $e$ indeterminately matches $p$ depending on how the various holes are filled. In this setting, the semantics of a \li{match} expression can act similarly to before, but evaluation must pause if the scrutinee indeterminately matches the pattern under consideration, waiting for the user to fill holes to continue.
 Likewise, redundancy and exhaustiveness also become ternary decisions: a \li{match} expression may either be definitely exhaustive, definitely non-exhaustive, or indeterminate, and likewise for redundancy. We leave a more detailed discussion of these analyses to our full paper. 
 
-With this, we have identified the main contributions our proposal will make. We seek to develop a calculus which formalizes the above discussion, allowing pattern matching with holes in both expressions and patterns. We will maintain maximal liveness by identifying when a match is indeterminate and when an expression can no longer be evaluated without further hole-filling, and we will develop a means to statically perform (possibly indeterminate) exhaustiveness and redundancy checking in this setting.
-
 %\subsection{Exhaustiveness Checking with Pattern Holes}
 %
 %\begin{figure}

@@ -91,6 +91,11 @@
 
 \newcommand{\highlight}[1]{\colorbox{yellow}{$\displaystyle #1$}}
 
+%% Jana Dunfield macros
+\def\OPTIONConf{1}
+\usepackage{jdunfield}
+\usepackage{rulelinks}
+
 \usepackage{listings}%
 \lstloadlanguages{ML}
 \lstset{tabsize=2, 
@@ -108,6 +113,7 @@
 \newcommand{\lismall}[1]{\lstinline[basicstyle=\ttfamily\fontsize{9pt}{1em}\selectfont]{#1}}
 
 \input{macros}
+\input{rulecommands}
 
 \begin{document}
 
@@ -163,6 +169,7 @@
 \input{introduction}
 \input{background}
 \input{pattern-matching}
+\input{calculus}
 \input{mechanization}
 
 %% Bibliography

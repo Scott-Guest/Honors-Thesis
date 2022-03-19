@@ -11,62 +11,62 @@ Most interesting, however, is when different hole fillings give rise to differen
 Thus, when we allow expression and pattern holes, we can no longer determinately say whether an expression matches a given pattern. What was once a binary decision (either $e$ matches $p$ or $e$ does not match $p$) is now a ternary decision: either $e$ must match $p$, $e$ must not match $p$, or $e$ indeterminately matches $p$ depending on how the various holes are filled. In this setting, the semantics of a \li{match} expression can act similarly to before, but evaluation must pause if the scrutinee indeterminately matches the pattern under consideration, waiting for the user to fill holes to continue.
 Likewise, redundancy and exhaustiveness also become ternary decisions: a \li{match} expression may either be definitely exhaustive, definitely non-exhaustive, or indeterminate, and likewise for redundancy. We leave a more detailed discussion of these analyses to our full paper. 
 
-%\subsection{Exhaustiveness Checking with Pattern Holes}
-%
-%\begin{figure}
-%	\centering
-%	% Capture tallest image in box 3
-%	\setbox3=\hbox{\includegraphics[scale=0.45]{imgs/exhaustive.png}}%
-%	\subcaptionbox{Indeterminately Exhaustive\label{fig:may-exhaustive}}{
-%		\raisebox{\dimexpr\ht3-\height}{
-%			\includegraphics[scale=0.45,valign=t]{imgs/maybe_exhaustive.png}%
-%			\vphantom{\includegraphics[scale=0.45,valign=t]{imgs/maybe_exhaustive.png}}
-%		}
-%	}
-%	\hfil
-%	\subcaptionbox{Necessarily Inexhaustive\label{fig:not-exhaustive}}{
-%		\raisebox{\dimexpr\ht3-\height}{
-%			\includegraphics[scale=0.45,valign=t]{imgs/not_exhaustive.png}%
-%			\vphantom{\includegraphics[scale=0.45,valign=t]{imgs/not_exhaustive.png}}
-%		}
-%	}
-%	\hfil
-%	\subcaptionbox{Necessarily Exhaustive\label{fig:must-exhautive}}{
-%		\includegraphics[scale=0.45,valign=t]{imgs/exhaustive.png}
-%	}
-%	\caption{Exhaustiveness Checking with Pattern Holes}
-%	\label{fig:exhaustiveness}
-%\end{figure}
-%
-%\subsection{Redundancy Checking with Pattern Holes}
-%
-%\begin{figure}
-%	\centering
-%	\subcaptionbox{Necessarily Irredundant (first two patterns) + Indeterminately Irredundant (third pattern)\label{fig:may-redundant}}{
-%		\includegraphics[scale=0.5,valign=t]{imgs/maybe_redundant.png}%
-%		\vphantom{\includegraphics[scale=0.5,valign=t]{imgs/redundant.png}}
-%	} 
-%	\hfil
-%	\subcaptionbox{Necessarily Redundant (third pattern) \label{fig:must-redundant}}{
-%		\includegraphics[scale=0.5,valign=t]{imgs/redundant.png}
-%	}%
-%	\caption{Redundancy Checking with Pattern Holes}
-%	\label{fig:redundancy}
-%\end{figure}
-%
-%\subsection{Live Evaluation with Pattern Holes}
-%
-%\begin{figure}
-%	\centering
-%	\subcaptionbox{Pattern matching with expression holes\label{fig:exp-hole}}{
-%		\includegraphics[scale=0.47,valign=t]{imgs/pat_match_exp_holes.png}
-%		\vphantom{\includegraphics[scale=0.47,valign=t]{imgs/pat_match_exp_holes.png}}
-%	}
-%	\hfil
-%	\subcaptionbox{Pattern matching with pattern holes\label{fig:pat-hole}}{
-%		\includegraphics[scale=0.47,valign=t]{imgs/pat_match_pat_holes.png}
-%	}
-%	\caption{Live Evaluation with Expression and Pattern Holes}
-%	\label{fig:evaluation-ex}
-%\end{figure}
+\subsection{Exhaustiveness Checking with Pattern Holes}
+
+\begin{figure}
+	\centering
+	% Capture tallest image in box 3
+	\setbox3=\hbox{\includegraphics[scale=0.45]{imgs/exhaustive.png}}%
+	\subcaptionbox{Indeterminately Exhaustive\label{fig:may-exhaustive}}{
+		\raisebox{\dimexpr\ht3-\height}{
+			\includegraphics[scale=0.45,valign=t]{imgs/maybe_exhaustive.png}%
+			\vphantom{\includegraphics[scale=0.45,valign=t]{imgs/maybe_exhaustive.png}}
+		}
+	}
+	\hfil
+	\subcaptionbox{Necessarily Inexhaustive\label{fig:not-exhaustive}}{
+		\raisebox{\dimexpr\ht3-\height}{
+			\includegraphics[scale=0.45,valign=t]{imgs/not_exhaustive.png}%
+			\vphantom{\includegraphics[scale=0.45,valign=t]{imgs/not_exhaustive.png}}
+		}
+	}
+	\hfil
+	\subcaptionbox{Necessarily Exhaustive\label{fig:must-exhautive}}{
+		\includegraphics[scale=0.45,valign=t]{imgs/exhaustive.png}
+	}
+	\caption{Exhaustiveness Checking with Pattern Holes}
+	\label{fig:exhaustiveness}
+\end{figure}
+
+\subsection{Redundancy Checking with Pattern Holes}
+
+\begin{figure}
+	\centering
+	\subcaptionbox{Necessarily Irredundant (first two patterns) + Indeterminately Irredundant (third pattern)\label{fig:may-redundant}}{
+		\includegraphics[scale=0.5,valign=t]{imgs/maybe_redundant.png}%
+		\vphantom{\includegraphics[scale=0.5,valign=t]{imgs/redundant.png}}
+	} 
+	\hfil
+	\subcaptionbox{Necessarily Redundant (third pattern) \label{fig:must-redundant}}{
+		\includegraphics[scale=0.5,valign=t]{imgs/redundant.png}
+	}%
+	\caption{Redundancy Checking with Pattern Holes}
+	\label{fig:redundancy}
+\end{figure}
+
+\subsection{Live Evaluation with Pattern Holes}
+
+\begin{figure}
+	\centering
+	\subcaptionbox{Pattern matching with expression holes\label{fig:exp-hole}}{
+		\includegraphics[scale=0.47,valign=t]{imgs/pat_match_exp_holes.png}
+		\vphantom{\includegraphics[scale=0.47,valign=t]{imgs/pat_match_exp_holes.png}}
+	}
+	\hfil
+	\subcaptionbox{Pattern matching with pattern holes\label{fig:pat-hole}}{
+		\includegraphics[scale=0.47,valign=t]{imgs/pat_match_pat_holes.png}
+	}
+	\caption{Live Evaluation with Expression and Pattern Holes}
+	\label{fig:evaluation-ex}
+\end{figure}
 

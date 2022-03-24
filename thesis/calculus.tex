@@ -1,11 +1,21 @@
-\section{Peanut: A Typed Pattern Hole Calculus}
+\section{Peanut: A Typed Pattern Hole Calculus}\label{sec:peanut}
+We now formalize the high-level discussion described in \autoref{sec:pattern-matching}. While all of our work has been implemented into the full Hazel system, for ease of presentation, we distill our contribution into a bare-bones typed lambda calculus called Peanut. The core of our calculus is based upon the Hazelnut Live internal language \cite{DBLP:journals/pacmpl/OmarVCH19}, but extended to include pattern holes. We develop a dynamic semantics which allows live evaluation as discussed in \autoref{sec:live-eval}, and additionally, present a static semantic guaranteeing exhaustiveness and irredundancy as discussed in \autoref{sec:exhaustiveness} and \autoref{sec:redundancy}. 
+
+We begin in \autoref{sec:syntax} by presenting the syntax of our calculus. In \autoref{sec:dynamics}, we then provide a small-step dynamic semantics with support for evaluating incomplete programs. In \autoref{sec:constraints}, \autoref{sec:statics}, and \autoref{sec:analyses}, we give the corresponding static semantics as a system of type assignment, making use a constraint language to reason about exhaustiveness and irredundancy. We defer discussion of decidability and implementation until \autoref{sec:decidability}.
 
 \input{fig-syntax}
 \input{fig-pointer-erasure}
 
-\subsection{Syntax}
+\subsection{Syntax}\label{sec:syntax}
+Figure \ref{fig:syntax} presents the syntax of Peanut. Peanut closely mirrors the internal language of Hazelnut Live \cite{DBLP:journals/pacmpl/OmarVCH19}, a typed lambda calculus with expression holes which provides the base of the Hazel system. For ease of presentation, we attempt to include only those forms necessary to have a rich discussion of pattern matching. Resultingly, we remove most of the machinery related to gradual typing \cite{DBLP:conf/snapl/SiekVCB15}, but such an extension is fairly straightforward to implement. Most of the forms are standard, and we follow their formulations outlined in \cite{Harper2012}. 
 
-\subsection{Dynamic Semantics}
+Unsurprisingly, we include lambda functions and function application. We choose natural numbers as our base type. In order to create interesting expressions to pattern match on, we also allow the formation of binary sum and binary product types. Correspondingly, we include pairs, projection operators, and left and right injections. (Note that pattern matching generally negates the need for explicit projections operators, but we include such forms here for reasons discussed later.) To simplify our type assignment system, we also require injections and functions to have explicit type annotations. Such annotations are fairly innocuous, as Peanut represents an internal language, so if desired, annotations can always be inserted during elaboration. Finally, we include the main forms of interest: holes, patterns, and match expressions.
+
+As discussed in \autoref{sec:intro}, holes come in two variants. Empty expression holes are written 
+
+
+
+\subsection{Dynamic Semantics}\label{sec:dynamics}
 
 \input{fig-step}
 
@@ -15,21 +25,17 @@
 
 \input{fig-notintro}
 
-\subsection{Match Constraint Language}
+\subsection{Match Constraint Language}\label{sec:constraints}
 
 \input{fig-constraint}
 
 \input{fig-satisfy}
 
-\subsection{Static Semantics}
+\subsection{Static Semantics}\label{sec:statics}
 
 \input{fig-exptyp}
 \input{fig-pat-rulestyp}
 
-\subsection{Exhaustiveness and Redundancy}
+\subsection{Exhaustiveness and Redundancy}\label{sec:analyses}
 
 \input{fig-truify-falsify}
-
-\subsection{Decidability}
-
-\input{fig-incon}

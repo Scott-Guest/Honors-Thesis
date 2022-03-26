@@ -94,7 +94,7 @@ Expectedly, one can prove that there is indeed a correspondence between a patter
 	\end{enumerate}
 \end{lemma}
  
-Combining this result with \autoref{lemma:match-determinism}, we can also verify that the various constraint satisfaction judgements cover all possibilities and are mutually exclusive.
+Combining this result \autoref{lemma:match-determinism}, we may also verify that the various constraint satisfaction judgements are mutually exclusive and cover all possibilities.
 
 \begin{theorem}[Exclusiveness of Constraint Satisfaction]
 	\label{theorem:exclusive-constraint-satisfaction}
@@ -106,12 +106,82 @@ Combining this result with \autoref{lemma:match-determinism}, we can also verify
 	\end{enumerate}
 \end{theorem}
 
-Now, with the setup of our constraint language clear, let us return to the issue of redundancy and exhaustiveness checking. 
+With the setup of our constraint language clear, let us return to the issue of redundancy and exhaustiveness checking. For now, we focus only on defining these notions in terms of constraints, deferring discussion of their actual implementation until \autoref{sec:decidability}.
+
+Consider if we have a zippered list of rules $\zruls{rs_{pre}}{r}{rs_{post}}$ with the currently considered rule $r$ given by $\hrul{p}{er}$. Recalling the discussion in \autoref{sec:redundancy}, we state that $r$ is redundant if it is unreachable in any hole filling, i.e. if any expression which could possibly reach $r$ will instead match against one of the rules in $rs_{pre}$. Stated formally, $r$ will be redundant if for all appropriately-typed final expressions $e$, if either $\hpatmatch{e}{p}{\theta}$ or $\hmaymatch{e}{p}$ is derivable then so is $\hpatmatch{e}{p^\prime}{\theta^\prime}$ for some pattern $p^\prime$ in a previous rule. Using \autoref{lemma:const-matching-coherence}, we can translate this into a statement about constraints. That is, a constraint $\xi$ is redundant if any appropriately-typed expression $e$ with $\csatisfyormay{e}{\xi}$ necessarily has $\csatisfy{e}{\xi_{pre}}$ for some constraint $\xi_{pre}$ emitted by a pattern earlier in the sequence. In fact, as we may take the logical or of constraints, we can consider just a single $\xi_{pre}$ taken as the disjunction of all previously emitted constraints. This inspires the following definition of \emph{entailment}.
+
+\begin{definition}[Indeterminate Entailment of Constraints]
+	\label{definition:const-entailment}
+	Suppose that $\ctyp{\xi_1}{\tau}$ and $\ctyp{\xi_2}{\tau}$.
+	Then $\csatisfy{\xi_1}{\xi_2}$ iff for all $e$ such that $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isVal{e}$ we have $\csatisfyormay{e}{\xi_1}$ implies $\csatisfy{e}{\xi_2}$
+\end{definition}
+Correspondingly, if $\xi_{pre}$ is the disjunction of all constraints emitted by the previously considered rules in a match, and if $\xi$ is the constraint emitted by the current rule, then the current rule is necessarily redundant if and only if $\csatisfy{\xi}{\xi_{pre}}$. Conversely, to ensure a rules is either necessarly or indeterminately irredundant, we must check that $\cnotsatisfy{\xi}{\xi_{pre}}$. In our yet-to-be-discussed static system, such checks are added as a premise in the rules \TOneRules and \TRules.
+
+It is worth emphasizing that the above definition identifies \emph{necessary} redundancy rather than \emph{indeterminate} redundancy. Indeed, indeterminate redundancy may be resolved by further hole-filling, so we do not yet desire to report an error to the user. Likewise with exhaustiveness checking, we only wish to report an error in cases of \emph{necessary} inexhaustiveness. To that end, conversely, we must be able to identify when a constraint is either \emph{necessarily} exhaustive or \emph{indeterminately} exhaustive. This is captured by a slightly weaker notion of entailment.
+
+\begin{definition}[Potential Entailment of Constraints]
+	\label{definition:nn-entailment}
+	Suppose that $\ctyp{\xi_1}{\tau}$ and $\ctyp{\xi_2}{\tau}$. Then $\csatisfyormay{\xi_1}{\xi_2}$ iff for all $e$ such that $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isFinal{e}$ we have $\csatisfyormay{e}{\xi_1}$ implies $\csatisfyormay{e}{\xi_2}$ 
+\end{definition}
+We can then state that a constraint $\xi$ is either necessarily or indeterminately exhaustive exactly when $\csatisfyormay{\ctruth}{\xi}$, relying on the fact that every expression possibly satisfies the truth constraint $\ctruth$. That is, $\xi$ is not necessarily inexhaustive if every expression possibly satisfies $\xi$. 
+
+Note that the definition of potential entailment quantifies over all final expressions rather than just those $e$ with $\isVal{e}$. Resultingly, so long as the constraint $\xi$ emitted by a list of rules has $\csatisfyormay{\ctruth}{\xi}$, any scrutinee, either a value or indeterminate form, will possibly match at least one of the patterns in the rule, preventing evaluation from getting stuck. Such a definition simplifies the proof of progress in \autoref{theorem:determinism}. However, as the following lemma states, exhaustiveness over values also ends up being sufficient.
+
+\begin{lemma}
+	\label{lem:val-final-satormay}
+	Suppose $\ctyp{\hxi}{\tau}$. Then $\csatisfyormay{e}{\hxi}$ for all $e$ such that $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isFinal{e}$ \textbf{iff} $\csatisfyormay{e}{\hxi}$ for all $e$ such that $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isVal{e}$.
+\end{lemma}
+
+To prove this, we reason about the possible values that result when filling holes in an indeterminate expression. Formally, the judgement $\inValues{e'}{\Delta}{e}$ defined in \autoref{fig:values} indicates that $e'$ is one of the possible values of $e$ after hole-filling. Here, $\Delta$ is a hole context used for typing information, which we discuss further in \autoref{sec:statics}. Using such a judgment, \autoref{lem:val-final-satormay} follows straightforwardly from the ensuing lemma.
+
+\begin{lemma}
+	\label{lem:complete-not-satormay}
+	Assume $\isFinal{e}$ and $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and
+	$\ctyp{\hxi}{\tau}$. If $\cnotsatisfyormay{e}{\hxi}$, then for any $e^\prime$ with
+	$\inValues{e'}{\Delta}{e}$ we also have $\cnotsatisfyormay{e'}{\hxi}$.
+\end{lemma}
+
+\input{fig-values}
+
 \subsection{Static Semantics}\label{sec:statics}
+ We are now ready to present the static semantics of Peanut, using the discussed match constraint language to enforce exhaustiveness and irredundancy of well-typed terms. Again, our type system is based on the internal language of Hazelnut Live \cite{DBLP:journals/pacmpl/OmarVCH19}, but extended to include typing of both patterns and expressions. Throughout, we use expression contexts $\Gamma$ to map variable names to types, and we use hole contexts $\Delta$ to map both expression and pattern hole names to their corresponding types.
+ 
+ \input{fig-pat-rulestyp}
+  
+ \subsubsection{Typing of Rules and Emitted Constraints}
+ We begin by formalizing pattern typing and the relationship between patterns and constraints. \autoref{fig:pat-rulestyp} presents three judgements specifying typing for patterns $p$, a single rule $r$, and a series of rules $rs$. All of the judgements here record the emitted constraints, and additionally, are used to enforce irredundancy.
+ 
+ For patterns, the judgement $\chpattyp{p}{\tau}{\xi}{\Gamma}{\Delta}$ specifies that, in the hole context $\Delta$, the pattern $p$ is assigned the type $\tau$, emits the constraint $\xi$, and makes typing assumptions about bound variables as recorded in the expression context $\Gamma$. Note that, unlike in any other of our typing judgements, the expression context $\Gamma$ is morally an output for pattern typing rather than an input. Rules \PTVar and \PTWild specify that wildcards and variables may be assigned any time, and as they may be matched by any expression, they emit only a truth constraint $\ctruth$. Rules \PTEHole and \PTHole specify that pattern holes emit the unknown constraint $?$, inductively checking that the content of a non-empty hole are also well-typed. All of these rules should be unsurprising.
+ 
+ Once we have specified pattern typing, we can then check the type of a rule. Intuitively, a rule $\hrul{p}{e}$ if both $p$ and $e$ are well-typed, with $e$ possibly referencing the variables bound in $p$. Correspondingly, when we specify the type of $e$, we use the context $\Gamma \uplus \Gamma_p$, where $\Gamma_p$ records assumptions about the types of bound variables in $p$ as emitted by the judgement $\chpattyp{p}{\tau}{\xi}{\Gamma_p}{\Delta}$. Note that we need never extend the context $\Delta$, as we assume it to already include all expression and hole types in the original program source code. In summary then, the rule typing judgement $\chrultyp{\Gamma}{\Delta}{\hrulP{p}{e}}{\tau}{\xi}{\tau'}$ specifies that $r$ matches expressions of type $\tau$ and evaluates to a corresponding branch expression of type $\tau^\prime$, emitting constraint $\xi$.
+ 
+ Finally, for later use in type checking match expression, we define typing for an entire sequence of rules $rs$. With the full rule sequence now available, we also are able to enforce irredundancy. Intuitively, the judgement $\chrulstyp{\Gamma}{\Delta}{\xi_{pre}}{rs}{\tau}{\xi_{rs}}{\tau'}$ states that all of the rules in $rs$ are matched by expressions of the same type $\tau$, and they all have corresponding branch expressions of the same type $\tau^\prime$. Moreover, it states that the disjunction of the all rules together emits the constraint $\xi_{rs}$, and crucially, that this emitted constraint does not entail another constraint $\xi_{pre}$. Morally, $\xi_{pre}$ is an input to the judgement which records the constraint emitted by all previously considered rules. Thus, checking that $\cnotsatisfy{\xi_{rs}}{\xi_{pre}}$ ensures irredundancy.
+ 
+To accomplish this, the rule \TOneRules delegates to the single rule typing judgement, while also adding a premise $\cnotsatisfy{\xi_{r}}{\xi_{pre}}$ to ensure irredundancy. For the inductive case of a list $\hrules{r}{rs}$, we consider the rules one-by-one, analogously to how a match expression considers rules one-by-one from the top down. Correspondingly, the first premise of \TRules specifies that the head of the list $r$ is well-typed and irredundant with respect to $\xi_{pre}$. In turn, the second premise takes the constraint $\xi_r$ emitted by $r$, appends it the constraint $\xi_{pre}$ emitted by all previously considered rules, then inductively uses this as input when checking the tail of the list $rs$. At the same time, we record the constraint emitted by $\hrules{r}{rs}$ as $\cor{\xi_r}{\xi_{rs}}$, the disjunction of the constraint emitted by $r$ and that emitted by $rs$.
 
 \input{fig-exptyp}
-\input{fig-pat-rulestyp}
 
-\subsection{Exhaustiveness and Redundancy}\label{sec:analyses}
+\subsubsection{Typing of Expressions}
+ We are now able to present the full typing judgement for expressions. For all non-pattern matching forms, the rules are standard, with our inclusion of type annotations on functions and injections enabling a simple system of type assignment. \autoref{fig:exptyp} displays the definitions for the judgement $\hexptyp{\Gamma}{\Delta}{e}{\tau}$ indicating that an expression $e$ has type $\tau$, where the types of free variables are recorded in a context $\Gamma$, and the types of expression and pattern holes from the original source code are recorded in a context $\Delta$ (recall that Peanut is an internal language). The only rules of interest to us are those for the match expression, \TMatchZPre and \TMatchNZPre.
+ 
+Considering the zippered rule list, \TMatchZPre represent the case where have not yet started pattern matching, and there are no previously considered rules. The first premise checks that the scrutinee is well-typed. The second premise ensures that the rules are all matchable by expressions of the same type $\tau$, and that all have branch expressions of type $\tau^\prime$. Correspondingly, as a the match expression will ultimately evaluate to one of these branch expressions, the type of the entire match is also $\tau^\prime$. Note that, because there are no previously considered rules, the second premise need only check irredundancy with respect to the constraint $\cfalsity$, which should never be entailed by any constraint $\xi$ with $\possible{\xi}$ (and in particular, any constraint emitted by a pattern).
+
+For \TMatchNZPre, we are now considering the case where we are in the midst of pattern matching, having already considered the rules $rs_{pre}$ and currently considering the rule $r$. As pattern matching should only proceed once a scrutinee is fully evaluated, we add a premise requiring $\isFinal{e}$. Additionally, to ensure that it was valid to reach this point in the rule list, the scrutinee should not have matched any previously considered rules, hence we add a premise $\cnotsatisfyormay{e}{\xi_{pre}}$. Indeed, \autoref{lemma:const-matching-coherence} ensures this is the case. As well, we again require that the rules are well-typed, checking this piecewise - first with the previously considered rules $rs_{pre}$, then with the remaining rules $\hrules{r}{rs_{post}}$. Finally, we ensure exhaustiveness on the total emitted constraint as $\csatisfyormay{\ctruth}{\cor{\xi_{pre}}{\xi_{rest}}}$.
+
+Thus, our system indeed ensures a term is well-typed only if it also both exhaustive and irredundant, either necessarily or indeterminately. Alternatively, one could also extract these checks as their own judgements separate from the type system, although exhaustiveness is still required to ensure progress in \autoref{theorem:determinism}. We take this alternative in our Agda mechanization, and discuss that choice further in \autoref{sec:mechanization}.
+
+\subsubsection{Type Safety}
+The type safety of Peanut is established by \autoref{theorem:determinism} and \autoref{theorem:preservation}.
+
+\begin{theorem}[Preservation]
+	\label{theorem:preservation}
+	If $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\htrans{e}{e'}$
+	then $\hexptyp{\cdot}{\Delta}{e'}{\tau}$
+\end{theorem}
+While we do not enumerate them here, the proof of preservation relies on a number of small lemmas showing that our various typing and finality judgements are well-behaved with respect to substitution (in particular, when applying a substitution list $\theta$ emitted by the judgement $\hpatmatch{e}{p}{\theta}$). The details can be found in our mechanization.
+
+\subsection{Eliminating Indeterminacy}\label{sec:analyses}
+Thus far, we have managed to describe a type system encoding exhaustiveness and irredundancy using constraint entailment. However, it is quite unclear how to actually check when such entailment holds, and indeed, our definitions require quantifying over all final expressions of a given type, yielding no obvious decision procedure. As a first step towards remedying this, we now discuss how to rephrase questions of entailment so that no instances of the unknown constraint ($\cunknown$) are required. That is, we eliminate any indeterminacy.
+
 
 \input{fig-truify-falsify}

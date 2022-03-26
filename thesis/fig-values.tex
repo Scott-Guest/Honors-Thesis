@@ -1,0 +1,49 @@
+% !TeX root = thesis.tex
+
+\begin{figure}[h]
+\judgbox{
+  \inValues{e'}{\Delta}{e}
+}{
+  $e'$ is one of the possible values of $e$
+}
+
+\begin{mathpar}
+\Infer{IVVal}{
+  \isVal{e} \\
+  \hexptyp{\cdot}{\Delta}{e}{\tau}
+}{
+  \inValues{e}{\Delta}{e}
+}
+
+\Infer{IVIndet}{
+  \notIntro{e} \\
+  \hexptyp{\cdot}{\Delta}{e}{\tau} \\
+  \isVal{e'} \\
+  \hexptyp{\cdot}{\Delta}{e'}{\tau}
+}{
+  \inValues{e'}{\Delta}{e}
+}
+
+\Infer{IVInl}{
+  \inValues{e_1'}{\Delta}{e_1} \\
+}{ 
+  \inValues{\hinl{\tau_2}{e_1'}}{\Delta}{\hinl{\tau_2}{e_1}}
+}
+
+\Infer{IVInr}{
+  \inValues{e_2'}{\Delta}{e_2} \\
+}{ 
+  \inValues{\hinr{\tau_1}{e_2'}}{\Delta}{\hinr{\tau_1}{e_2}}
+}
+
+\Infer{IVPair}{
+  \inValues{e_1'}{\Delta}{e_1} \\
+  \inValues{e_2'}{\Delta}{e_2}
+}{
+  \inValues{\hpair{e_1'}{e_2'}}{\Delta}{\hpair{e_1}{e_2}}
+}
+\end{mathpar}
+
+\caption{Values}
+\label{fig:values}
+\end{figure}

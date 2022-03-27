@@ -181,7 +181,56 @@ The type safety of Peanut is established by \autoref{theorem:determinism} and \a
 While we do not enumerate them here, the proof of preservation relies on a number of small lemmas showing that our various typing and finality judgements are well-behaved with respect to substitution (in particular, when applying a substitution list $\theta$ emitted by the judgement $\hpatmatch{e}{p}{\theta}$). The details can be found in our mechanization.
 
 \subsection{Eliminating Indeterminacy}\label{sec:analyses}
-Thus far, we have managed to describe a type system encoding exhaustiveness and irredundancy using constraint entailment. However, it is quite unclear how to actually check when such entailment holds, and indeed, our definitions require quantifying over all final expressions of a given type, yielding no obvious decision procedure. As a first step towards remedying this, we now discuss how to rephrase questions of entailment so that no instances of the unknown constraint ($\cunknown$) are required. That is, we eliminate any indeterminacy.
+Thus far, we have managed to describe a type system encoding exhaustiveness and irredundancy checking using constraint entailment. However, it is quite unclear how to actually check when such entailment holds - our definitions require quantifying over all final expressions of a given type, yielding no obvious decision procedure. To make matters worse, our definitions also involve indeterminate satisfaction, requiring us to reason conservatively about all possible hole-fillings through the unknown constraint $(\cunknown)$. In this section, as a first step towards resolving these complications, we discuss how to remove all such indeterminacy, eliminating any use of $\cunknown$ from the constraints involved in an entailment. We forgo discussion of the full decision procedure until \autoref{sec:decidability}.
+
+Recall that, for exhaustiveness, we only report an error when a  match expression is \emph{necessarily inexhaustive}, or equivalently, when it is inexhaustive regardless of how the programmer chooses to fill any pattern holes. In particular, such a match expression should still be inexhaustive even in the most permissive of hole-fillings, i.e. when all pattern holes are treated as wildcards. Conversely, if a match expression is inexhaustive with this most permissive hole-filling, then it will also certainly be inexhaustive given any more restrictive hole-filling. As a result of this, we can state that a match expression is necessarily inexhaustive if and only if it is inexhaustive when all pattern holes are filled with wildcards. 
+
+As discussed, we use constraints to encode exhaustiveness. Considering the definitions in \autoref{fig:pat-rulestyp}, a pattern hole emits an unknown constraint $?$, while a wildcard emits the truth constraint $\ctruth$. Correspondingly, filling pattern holes with wildcards replaces all instances of $\cunknown$ with $\ctruth$ in the emitted constraint. To that end, \autoref{fig:truify-falsify} defines a function $\ctruify{\xi}$ performing such an operation. We refer to this as \emph{truifying} the constraint. 
+
+With all indeterminacy eliminated, we can now define a simpler notion of exhaustiveness known as \emph{constraint validity}. Here, the premise $\ctruify{\xi} = \xi$ specifies that $\xi$ no longer contains any instances of the unknown constraint. We call such a $\xi$ a \emph{fully known} constraint.
+
+ \begin{definition}[Validity of Constraints]
+ 	\label{definition:valid-constraint}
+ 	Suppose that $\ctruify{\xi}=\xi$ and $\ctyp{\xi}{\tau}$.
+ 	Then $\ccsatisfy{}{\xi_2}$ iff for all $e$ such that $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isVal{e}$ we have $\ccsatisfy{e}{\xi}$
+ \end{definition}
+
+The following theorem formalizes the above discussion, stating that a constraint is exhaustive if and only if truifying it produces a valid constraint. A proof is provided in our Agda mechanization.
+
+\begin{theorem}
+	\label{theorem:exhaustive-truify}
+	$\csatisfyormay{\ctruth}{\xi}$ if and only if $\ccsatisfy{\;}{\ctruify{\xi}}$.
+\end{theorem}
+
+We now make a similar argument regarding redundancy. Recall that a rule $r$ is necessarily redundant with respect to the previously considered rules $rs$ if, considering any possible hole filling, those expressions $e$ which match the pattern in $r$ also necessarily match some pattern in $rs$. In the worst case then, any expression $e$ which matches the most permissive hole filling of $r$ should still match some pattern in $rs$, even if we attempt to adversarially fill the pattern holes in $rs$ as to prevent any subterm of $e$ from matching them, i.e. if we consider the most restrictive hole filling of $rs$.
+
+In terms of constraints, if $r$ emits $\xi_r$ and $rs$ emits $\xi_{rs}$, then $r$ is necessarily redundant with repsect to $rs$ when $\csatisfy{\xi_r}{\xi_{rs}}$. To that end, \autoref{fig:truify-falsify} also defines a \emph{falsify} function $\cfalsify{\xi}$ which replaces every instance of $\cunknown$ in $\xi$ with $\bot$, corresponding to the most restrictive hole filling. The following theorem formalizes our discussion.
+
+\begin{theorem}
+	\label{theorem:redundant-truify-falsify}
+	$\csatisfy{\xi_1}{\xi_2}$ if and only if $\ccsatisfy{\ctruify{\xi_1}}{\cfalsify{\xi_2}}$.
+\end{theorem}
+
+Further, considering dual as negation and entailment as implication, one can prove something akin to the material implication of propositional logic, transforming constraint entailment into constraint validity. In effect, this demonstrates an equivalence between fully known redundancy and exhaustiveness.
+
+\begin{lemma}[Material Entailment]
+	\label{lemma:material-entailment}
+	Suppose $\xi_1$ and $\xi_2$ are fully known constraints. Then $\csatisfy{\xi_1}{\xi_2}$ if and only if $\ccsatisfy{\;}{\cor{\cdual{\xi_1}}{\xi_2}}$.
+\end{lemma}
+
+Combined with \autoref{theorem:redundant-truify-falsify}, we can then state necessary redundancy in terms of validity.
+
+\begin{theorem}
+	\label{theorem:redundant-validity}
+	$\csatisfy{\xi_r}{\xi_{rs}}$ if and only if $\ccsatisfy{\;}{\cor{\cdual{\ctruify{\xi_r}}}{\cfalsify{\xi_{rs}}}}$.
+\end{theorem}
+
+
+
+
+
+
+
 
 
 \input{fig-truify-falsify}

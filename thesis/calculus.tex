@@ -187,6 +187,8 @@ Recall that, for exhaustiveness, we only report an error when a  match expressio
 
 As discussed, we use constraints to encode exhaustiveness. Considering the definitions in \autoref{fig:pat-rulestyp}, a pattern hole emits an unknown constraint $?$, while a wildcard emits the truth constraint $\ctruth$. Correspondingly, filling pattern holes with wildcards replaces all instances of $\cunknown$ with $\ctruth$ in the emitted constraint. To that end, \autoref{fig:truify-falsify} defines a function $\ctruify{\xi}$ performing such an operation. We refer to this as \emph{truifying} the constraint. 
 
+\input{fig-truify-falsify}
+
 With all indeterminacy eliminated, we can now define a simpler notion of exhaustiveness known as \emph{constraint validity}. Here, the premise $\ctruify{\xi} = \xi$ specifies that $\xi$ no longer contains any instances of the unknown constraint. We call such a $\xi$ a \emph{fully known} constraint.
 
  \begin{definition}[Validity of Constraints]
@@ -202,16 +204,14 @@ The following theorem formalizes the above discussion, stating that a constraint
 	$\csatisfyormay{\ctruth}{\xi}$ if and only if $\ccsatisfy{\;}{\ctruify{\xi}}$.
 \end{theorem}
 
-We now make a similar argument regarding redundancy. Recall that a rule $r$ is necessarily redundant with respect to the previously considered rules $rs$ if, considering any possible hole filling, those expressions $e$ which match the pattern in $r$ also necessarily match some pattern in $rs$. In the worst case then, any expression $e$ which matches the most permissive hole filling of $r$ should still match some pattern in $rs$, even if we attempt to adversarially fill the pattern holes in $rs$ as to prevent any subterm of $e$ from matching them, i.e. if we consider the most restrictive hole filling of $rs$.
-
-In terms of constraints, if $r$ emits $\xi_r$ and $rs$ emits $\xi_{rs}$, then $r$ is necessarily redundant with repsect to $rs$ when $\csatisfy{\xi_r}{\xi_{rs}}$. To that end, \autoref{fig:truify-falsify} also defines a \emph{falsify} function $\cfalsify{\xi}$ which replaces every instance of $\cunknown$ in $\xi$ with $\bot$, corresponding to the most restrictive hole filling. The following theorem formalizes our discussion.
+We now make a similar argument regarding redundancy. Recall that a rule $r$ is necessarily redundant with respect to the previously considered rules $rs$ if, considering any possible hole filling, those expressions $e$ which match the pattern in $r$ also necessarily match some pattern in $rs$. In the worst case then, any expression $e$ which matches the most permissive hole filling of $r$ should still match some pattern in $rs$, even if we attempt to adversarially fill the pattern holes in $rs$ as to prevent any subterm of $e$ from matching them. That is, we should consider the most permissive hole filling of $r$ but the most restrictive hole filling of $rs$. In terms of constraints, if $r$ emits $\xi_r$ and $rs$ emits $\xi_{rs}$, then $r$ is necessarily redundant with repsect to $rs$ when $\csatisfy{\xi_r}{\xi_{rs}}$. To that end, \autoref{fig:truify-falsify} also defines a \emph{falsify} function $\cfalsify{\xi}$ which replaces every instance of $\cunknown$ in $\xi$ with $\bot$, corresponding to the most restrictive hole filling. The following theorem formalizes our discussion.
 
 \begin{theorem}
 	\label{theorem:redundant-truify-falsify}
 	$\csatisfy{\xi_1}{\xi_2}$ if and only if $\ccsatisfy{\ctruify{\xi_1}}{\cfalsify{\xi_2}}$.
 \end{theorem}
 
-Further, considering dual as negation and entailment as implication, one can prove something akin to the material implication of propositional logic, transforming constraint entailment into constraint validity. In effect, this demonstrates an equivalence between fully known redundancy and exhaustiveness.
+Further, considering dual as negation and entailment as implication, one can prove something akin to the material implication of propositional logic, transforming constraint entailment into constraint validity. In effect, this demonstrates a "fully known" equivalence between redundancy and exhaustiveness.
 
 \begin{lemma}[Material Entailment]
 	\label{lemma:material-entailment}
@@ -225,12 +225,84 @@ Combined with \autoref{theorem:redundant-truify-falsify}, we can then state nece
 	$\csatisfy{\xi_r}{\xi_{rs}}$ if and only if $\ccsatisfy{\;}{\cor{\cdual{\ctruify{\xi_r}}}{\cfalsify{\xi_{rs}}}}$.
 \end{theorem}
 
+\subsection{Implementation and Decidability}\label{sec:decidability}
+Considering \autoref{theorem:exhaustive-truify} and \autoref{theorem:redundant-validity}, we have now reduced both exhaustiveness and irredundancy checking to the problem of constraint validity. Thus, to provide actual implementations of these checks, all that remains to provide an algorithm deciding whether a given constraint $\xi$ is valid. 
 
+The ensuing theorem provides the key ingredient needed to implement such a procedure.
 
+\begin{theorem}[Exclusiveness of Satisfaction Judgment]
+	\label{theorem:exclusive-complete-constraint-satisfaction}
+	If $\ctyp{\xi}{\tau}$ and $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isVal{e}$ then exactly one of the following holds
+	\begin{enumerate}
+		\item $\ccsatisfy{e}{\xi}$
+		\item $\ccsatisfy{e}{\cdual{\xi}}$
+	\end{enumerate}
+\end{theorem}
 
+We say that a fully known constraint $\ctyp{\xi}{\tau}$ is $\emph{inconsistent}$ if no value of type $\tau$ satisfies $\xi$. From the above theorem, it immediately follows that a fully known constraint $\xi$ is valid if and only if its dual $\bar{\xi}$ is inconsistent. Thus, to decide validity, it suffices to provide a decision procedure for inconsistency. 
 
+To this end, \autoref{fig:incon} defines a judgement  $\cincon{\Xi}$ specifying that a set of constraints $\Xi$ are together inconsistent. Here, we choose to use a set of constraints rather than a single constraint, as conceptually, a single constraint may really represent a boolean combination of many smaller constraints built up using using $\lor$ and $\land$. Conceptually, one may consider the set $\Xi$ to be the conjunction of all its elements.
 
+\autoref{theorem:validity-inconsistency} states that our judgement behaves as desired. Note that, unlike all other work we have presented thus far, we do not provide an Agda mechanization for results involving the $\cincon{\Xi}$ judgement.  While intuitively straightforward, the algorithms and proofs here require manipulations of finite sets which are not obviously structurally recursive, making them inordinately cumbersome to implement in Agda.
 
+\begin{theorem}
+\label{theorem:validity-inconsistency}
+If $\xi$ is fully known, then $\csatisfy{\;}{\xi}$ if and only if\; $\cincon{\cdual{\xi}}$
+\end{theorem}
 
+Let us discuss the $\cincon{\Xi}$ judgement in more detail. Throughout, we assume all constraints present in $\Xi$ are of the same type. To begin, logical connectives are handled in a straightforward way. Rule \CINCAnd specifies that a set including the constraint $\cand{\xi_1}{\xi_2}$ is inconsistent exactly when it is inconsistent including both $\xi_1$ and $\xi_2$. Likewise, rule \CINCOr specifies that a set including $\cor{\xi_1}{\xi_2}$ is inconsistent only if it is inconsistent both in the case of including $\xi_1$ and in the case of including $\xi_2$. As we will soon discuss, algorithmically, these judgements allow us to "flatten" any constraints in our inconsistency decision procedure, removing all instances of $\land$ and $\lor$.
 
-\input{fig-truify-falsify}
+Outside of logical connectives, we need only consider how inconsistency can arise for each type. For example, a set of constraints on numbers contains only constraints of the form $\cnum{n}$ and $\cnotnum{n}$. If $\cnum{n}$ and $\cnotnum{n}$ are both included for a single $n$, this is clearly inconsistent, and likewise if $\cnum{n_1}$ and $\cnum{n_2}$ are both included when $n_1 \neq n_2$. \CINCNum and \CINCNotNum handles these cases. For binary sums, inconsistency only occurs if either different constructors are specified as in \CINCInj, or if the same constructors are specified, but the constraints contained within said constructors are inductively inconsistent as in \CINCInl and \CINCInr. Binary products proceed similarly.
+
+\input{fig-incon}
+
+Considering each of the rules for $\cincon{\Xi}$, all premises only involve constraints that are proper components of the constraints in the corresponding conclusion. Consequently, $\cincon{\Xi}$ is decidable by simply inverting each applicable rule until there are no such rules remaining. Eventually, we will either hit a case requiring no induction in its premise - one of \CINCFalsity, \CINCNum, \CINCNotNum, and \CINCInj - implying inconsistency. Otherwise, we reach the point where no rules are applicable, implying consistency. 
+
+A full decision procedure $incon(\Xi)$ is shown below. Following our actual OCaml implementation, we choose to represent $\Xi$ as an ordered list of constraints, and thus proceed from the head onward.
+
+\begin{enumerate}
+\item If $\Xi$ is empty, return \li{false}. Otherwise, let $\Xi = \xi, \Xi^\prime$.
+\item If $\xi = \cfalsity$, return \li{true}.
+\item If $\xi = \ctruth$, return $incon(\Xi^\prime)$.
+\item If $\xi = \cand{\xi_1}{\xi_2}$, return $incon(\xi_1, \xi_2, \Xi^\prime)$.
+\item If $\xi = \cor{\xi_1}{\xi_2}$, return $incon(\xi_1, \Xi^\prime) \land incon(\xi_2, \Xi^\prime)$.
+\item Partition $\Xi$, letting $\Xi_{log}$ contain all constraints of the form $\cor{\xi_1}{\xi_2}$ or $\cand{\xi_1}{\xi_2}$ and letting $\Xi_{other}$ contains all other constraints. If $\Xi_{log}$ is non-empty, return $incon(\Xi_{log} \texttt{++}~ \Xi_{other})$.
+\item If $\xi = \cinl{\xi^\prime}$ or $\xi = \cinr{\xi^\prime}$, return \li{true} if $\Xi^\prime$ contains any mismatching injection constructor. Otherwise, strip the outermost injection constructor from each element of $\Xi^\prime$ to produce a list $\Xi^\prime_{str}$, then return $incon(\xi^\prime, \Xi^\prime_{str})$.
+\item If $\xi = \cpair{\xi_1, \xi_2}$, let $\Xi^\prime_1$ be the result of mapping $\cpair{\xi_1}{\xi_2} \mapsto \xi_1$ onto $\Xi^\prime$, and similarly, let $\Xi^\prime_2$ be the result of mapping $\cpair{\xi_1}{\xi_2} \mapsto \xi_2$ onto $\Xi^\prime$. Return $incon(\xi_1, \Xi^\prime_1) \lor incon(\xi_2, \Xi^\prime_2)$.
+\item If $\xi = \cnum{n}$ or $\xi = \cnotnum{n}$, then partition $\Xi$ into two lists, letting $\Xi_{yes}$ contain all constraints $\cnum{m}$ and $\Xi_{no}$ contain all constraints $\cnotnum{m}$. If $\Xi_{yes}$ contains $\cnum{m}$ and $\Xi_{no}$ contains $\cnotnum{m}$ for the same $m$, return \li{true}. If $\Xi_{yes}$ contains $\cnum{m_1}$ and $\cnum{m_2}$ with $m_1 \neq m_2$, return \li{true}. Otherwise, return \li{false}.
+\end{enumerate}
+
+Note that line (6) moves all constraints built up using $\land$ and $\lor$ to the front of the list, causing them to be expanded on lines (4) and (5) in the recursive call. Resultingly, after line (6), we can assume all constraints are "flattened" to an outermost non-$\land$ non-$\lor$ constructor. On line (7), we strip away constructors for binary sums. On line (8), we strip away constructors for binary products. Finally, on line (9) we reach our base case, only having to handle constraints on our base number type, which is easily decidable. If Peanut is extended to include other base types, similar cases would have to be added following line (9).
+
+With such a decision procedure, using the results of \autoref{theorem:exhaustive-truify},  \autoref{theorem:redundant-validity}, and \autoref{theorem:validity-inconsistency}, we now have decision procedures for exhaustiveness and redundancy. Note that the latter here theorem uses the fact that a constraint is equivalent to the dual of its dual.
+\begin{theorem}
+$\csatisfyormay{\ctruth}{\xi}$ if and only if $incon(\cdual{\ctruify{\xi}}) = true$.
+\end{theorem}
+\begin{theorem}
+$\csatisfy{\xi_r}{\xi_{rs}}$ if and only if $incon(\cand{\ctruify{\xi_r}}{\cdual{\cfalsify{\xi_{rs}}}})  = true$.
+\end{theorem}
+
+\subsubsection{Witness Generation}
+We have now shown how to decide both exhaustiveness and redundancy in the presence of holes. As discussed in \autoref{sec:background} and displayed in \autoref{fig:exhaustiveness} and \autoref{fig:redundancy}, such checks enable us to provide helpful feedback and statically eliminating large classes of bugs. However, note that simply reporting inexhaustivity with no further guidance may be quite frustrating for the user - we only opaquely state that at least one expression is unhandled, without ever giving a concrete example of such an expression. Particularly in the presence of holes, it may not be immediately clear why the inexhaustiveness arises.
+
+To remedy such opaqueness, if our necessarily inexhaustive rules emit a constraint $\xi$, we must construct a value $e$ such that $\cnotsatisfyormay{e}{\xi}$. Equivalently, considering \autoref{theorem:exhaustive-truify}, we must construct a value $e$ such that $\cnotsatisfy{e}{\ctruify{\xi}}$, which, by \autoref{theorem:exclusive-complete-constraint-satisfaction}, is in turn equivalent to having $\csatisfy{e}{\cdual{\ctruify{\xi}}}$. That is, constructing a witness to inexhaustiveness can be reduced to the problem of constructing a witness for a fully known constraint.
+
+Fortunately, constructing a witness only requires a slight modification of the $incon(\Xi)$ procedure we defined earlier. Indeed, the $\cincon{\Xi}$ judgement exactly pins down when it is impossible to construct a witness to a set of constraints $\Xi$, so it unsurprising that these algorithms are related. Formally, we give a procedure $witness(\Xi)$ where $\Xi$ is a set of constraints, either returning $None$ if $\Xi$ is inconsistent, or otherwise returning $Some(e)$ for a value $e$ with $\csatisfy{e}{\xi}$ for all $\xi \in \Xi$. 
+
+\begin{enumerate}
+\item If $\Xi$ is empty, return \li{Some}($e$) for any arbitrary expression $e$. Otherwise, let $\Xi = \xi, \Xi^\prime$.
+\item If $\xi = \cfalsity$, return \li{None}.
+\item If $\xi = \ctruth$, return $witness(\Xi^\prime)$.
+\item If $\xi = \cand{\xi_1}{\xi_2}$, return $witness(\xi_1, \xi_2, \Xi^\prime)$.
+\item If $\xi = \cor{\xi_1}{\xi_2}$, then compute $w_1 = witness(\xi_1, \Xi^\prime)$ and $w_2 = witness(\xi_2, \Xi^\prime)$. If both $w_1$ and $w_2$ are \li{None}, then return \li{None}. Otherwise, arbitrarily return whichever of $w_1$ and $w_2$ is not \li{None}.
+\item Partition $\Xi$, letting $\Xi_{log}$ contain all constraints of the form $\cor{\xi_1}{\xi_2}$ or $\cand{\xi_1}{\xi_2}$ and letting $\Xi_{other}$ contains all other constraints. If $\Xi_{log}$ is non-empty, return $witness(\Xi_{log} \texttt{++}~ \Xi_{other})$.
+\item If $\xi = \cinl{\xi^\prime}$ or $\xi = \cinr{\xi^\prime}$, return \li{None} if $\Xi^\prime$ contains any mismatching injection constructor. Otherwise, strip the outermost injection constructor from each element of $\Xi^\prime$ to produce a list $\Xi^\prime_{str}$. Compute $w = witness(\xi^\prime, \Xi^\prime_{str})$. If $w$ is \li{None} then return \li{None}. Otherwise, if $w$ is \li{Some}($e$), return \li{Some}($\cinl{e}$) if $\xi = \cinl{\xi^\prime}$ or \li{Some}($\cinr{e}$) if $\xi = \cinr{\xi^\prime}$.
+
+\item If $\xi = \cpair{\xi_1, \xi_2}$, let $\Xi^\prime_1$ be the result of mapping $\cpair{\xi_1}{\xi_2} \mapsto \xi_1$ onto $\Xi^\prime$, and similarly, let $\Xi^\prime_2$ be the result of mapping $\cpair{\xi_1}{\xi_2} \mapsto \xi_2$ onto $\Xi^\prime$. Compute $w_1 = incon(\xi_1, \Xi^\prime_1)$ and $w_2 =  incon(\xi_2, \Xi^\prime_2)$. If $w_1$ is \li{Some}($e_1$) and $w_2$ is \li{Some}($e_2$), then return \li{Some}($\hpair{e_1}{e_2})$. Otherwise, return \li{None}.
+
+\item If $\xi = \cnum{n}$ or $\xi = \cnotnum{n}$, then partition $\Xi$ into two lists, letting $\Xi_{yes}$ contain all constraints $\cnum{m}$ and $\Xi_{no}$ contain all constraints $\cnotnum{m}$. If $\Xi_{yes}$ contains $\cnum{m}$ and $\Xi_{no}$ contains $\cnotnum{m}$ for the same $m$, return \li{None}. If $\Xi_{yes}$ contains $\cnum{m_1}$ and $\cnum{m_2}$ with $m_1 \neq m_2$, return \li{None}. Otherwise, if $\Xi_{yes}$ is non-empty return \li{Some}($m$) for any $\cnum{m} \in \Xi_{yes}$, else return \li{Some}($m$) for any $m$ with $\cnotnum{m} \notin \Xi_{no}$.
+\end{enumerate}
+
+The above is almost the exact same as $incon(\Xi)$, except that we actually construct a witness for the case of the base type on line (9), and at each recursive call we wrap the result with an appropriate constructor to propagate such base witnesses upward, reporting inconsistency whenever this fails.
+
+On a final note, we can use a similar decision procedure to generate witnesses to irredundancy. That is, if $\cnotsatisfy{\xi_r}{\xi_{rs}}$, then in light of \autoref{theorem:redundant-validity}, $witness(\cand{\ctruify{\xi_r}}{\cdual{\cfalsify{\xi_{rs}}}})$ will be some value $e$ such that $\csatisfyormay{e}{\xi_r}$ and $\cnotsatisfy{e}{\xi_{rs}}$. As irredundancy is not an error, this is unlikely to be useful to the user, but it is an interesting observation nonetheless.

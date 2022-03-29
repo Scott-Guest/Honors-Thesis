@@ -1,0 +1,44 @@
+% !TeX root = thesis.tex
+\begin{figure}[ht]
+
+\begin{mathpar}
+\Infer{\AndIntro}{ 
+	\Gamma \vdash A \\ \Gamma \vdash B 
+}{
+	\Gamma \vdash A \land B
+}
+
+\Infer{\AndElimL}{
+	\Gamma \vdash A \land B
+}{
+	\Gamma \vdash A
+}
+
+\Infer{\AndElimR}{
+	\Gamma \vdash A \land B
+}{
+	\Gamma \vdash B
+}
+
+\Infer{\TAPair}{
+	\Gamma \vdash a : A\\ \Gamma \vdash b : B
+}{
+	\Gamma \vdash (a, b) : A \times B
+}
+
+\Infer{\TAFst}{
+	\Gamma \vdash p : A \times B
+}{
+	\Gamma \vdash \hfst{p} : A
+}
+
+\Infer{\TAFst}{
+	\Gamma \vdash p : A \times B
+}{
+	\Gamma \vdash \hsnd{p} : B
+}
+\end{mathpar}
+	
+\caption{Correspondence between $A \times B$ and $A \land B$}
+\label{fig:product-and}
+\end{figure}

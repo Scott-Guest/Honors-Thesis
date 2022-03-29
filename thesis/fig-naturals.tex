@@ -1,0 +1,23 @@
+% !TeX root = thesis.tex
+\begin{figure}[ht!]
+\begin{subfigure}{.45\textwidth}
+	\includegraphics[scale=0.75,valign=t]{imgs/naturals.png}%
+	\caption{Inductive Type Definition}
+\end{subfigure}
+\begin{subfigure}{.45\textwidth}
+	\begin{mathpar}
+		\Infer{\Zero}{
+		}{
+			\Gamma \vdash zero : Nat
+		}\\
+		\Infer{\Suc}{
+			\Gamma \vdash n : Nat
+		}{
+			\Gamma \vdash suc~n : Nat
+		}
+	\end{mathpar}
+	\caption{Introduction Rules}
+\end{subfigure}
+\caption{Natural numbers in Agda}
+\label{fig:naturals}
+\end{figure}

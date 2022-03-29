@@ -1,0 +1,32 @@
+% !TeX root = thesis.tex
+\begin{figure}[ht]
+	
+	\begin{mathpar}
+		\Infer{\UniversalIntro}{ 
+			\Gamma \vdash B \\ \text{($x$ not free in $\Gamma$)}
+		}{
+			\Gamma \vdash \forall x. B
+		}
+		
+		\Infer{\UniversalElim}{
+			\Gamma \vdash \forall x. B
+		}{
+			\Gamma \vdash [a / x]B
+		}
+		
+		\Infer{\TALam}{
+			\Gamma , x : A \vdash b : B
+		}{
+			\Gamma \vdash \lambda x : A. b : \Pi_{x : A} B
+		}
+		
+		\Infer{\TAAp}{
+			\Gamma \vdash f : \Pi_{x : A} B \\ \Gamma \vdash a : A
+		}{
+			\Gamma \vdash f(a) : [a / x] B
+		}
+	\end{mathpar}
+	
+	\caption{Correspondence between $\Pi_{x : A} B$ and $\forall x. B$}
+	\label{fig:function-forall}
+\end{figure}

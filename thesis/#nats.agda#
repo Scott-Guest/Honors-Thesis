@@ -23,3 +23,16 @@ n<sucn zero = z<s
 n<sucn (suc n) = s<s (n<sucn n)
 
 
+data constr : Set where
+  ·⊤    : constr
+  ·⊥    : constr
+  ·?    : constr
+  N     : Nat → constr
+  N̸     : Nat → constr
+  inl   : constr → constr
+  inr   : constr → constr
+  ⟨_,_⟩ : constr → constr → constr
+  _∨_   : constr → constr → constr
+  _∧_   : constr → constr → constr
+
+

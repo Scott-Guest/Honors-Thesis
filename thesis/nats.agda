@@ -21,3 +21,15 @@ two<three = s<s (s<s z<s)
 n<sucn : (n : Nat) → n < suc n
 n<sucn zero = z<s
 n<sucn (suc n) = s<s (n<sucn n)
+
+
+data comp-constr : Set where
+    ·⊤    : comp-constr
+    ·⊥    : comp-constr
+    N     : Nat → comp-constr
+    N̸     : Nat → comp-constr
+    inl   : comp-constr → comp-constr
+    inr   : comp-constr → comp-constr
+    ⟨_,_⟩ : comp-constr → comp-constr → comp-constr
+    _∨_   : comp-constr → comp-constr → comp-constr
+    _∧_   : comp-constr → comp-constr → comp-constr

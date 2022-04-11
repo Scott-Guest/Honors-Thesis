@@ -1,0 +1,494 @@
+\documentclass{beamer}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage{multicol}
+\usepackage{animate}
+\usepackage{xcolor}
+
+\usepackage{booktabs}   %% For formal tables:
+%% http://ctan.org/pkg/booktabs
+\usepackage{subcaption} %% For complex figures with subfigures/subcaptions
+%% http://ctan.org/pkg/subcaption
+\usepackage[export]{adjustbox}
+
+\usepackage[T1]{fontenc} % fix missing font cmtt
+\usepackage{amsmath}
+\let\Bbbk\relax
+\usepackage{amssymb} % Vdash
+\usepackage{graphicx} % rotatebox
+\usepackage{stmaryrd} % llparenthesis
+\usepackage{anyfontsize} % workaround for font size difference warning
+\usepackage{todonotes}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{calc,fit,tikzmark,plotmarks,arrows.meta,positioning,overlay-beamer-styles}
+
+\usepackage{cancel} % slash over symbol
+\usepackage{hyperref}
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+\def\figureautorefname{Fig.}
+\def\lemmaautorefname{Lemma}
+\def\sectionautorefname{Sec.}
+\let\subsectionautorefname\sectionautorefname
+\let\subsubsectionautorefname\sectionautorefname
+\newcommand{\rulesref}[1]{Rules (\ref{#1})}
+\newcommand{\ruleref}[1]{Rule (\ref{#1})}
+
+\usepackage{xcolor}
+\definecolor{hazelgreen}{RGB}{7,63,36}
+\definecolor{hazellightgreen}{RGB}{103,138,97}
+\definecolor{hazelyellow}{RGB}{245,222,179}
+\definecolor{hazellightyellow}{RGB}{254,254,234}
+
+\newcommand{\highlight}[1]{\colorbox{yellow}{$\displaystyle #1$}}
+
+%% Jana Dunfield macros
+\def\OPTIONConf{1}
+\usepackage{jdunfield}
+\usepackage{rulelinks}
+
+\usepackage{listings}%
+\lstloadlanguages{ML}
+\lstset{tabsize=2, 
+	basicstyle=\fontsize{7.5pt}{1em}\ttfamily, 
+	% keywordstyle=\sffamily,
+	commentstyle=\itshape\ttfamily\color{gray}, 
+	stringstyle=\ttfamily\color{purple},
+	mathescape=true,escapechar=\#,
+	numbers=left, numberstyle=\scriptsize\color{gray}\ttfamily, language=ML, showspaces=false,showstringspaces=false,xleftmargin=15pt, 
+	morekeywords={string, float, int, bool, match},
+	classoffset=0,belowskip=\smallskipamount, aboveskip=\smallskipamount,
+	moredelim=**[is][\color{red}]{SSTR}{ESTR}
+}
+\newcommand{\li}[1]{\lstinline[basicstyle=\ttfamily\fontsize{9pt}{1em}\selectfont]{#1}}
+\newcommand{\lismall}[1]{\lstinline[basicstyle=\ttfamily\fontsize{9pt}{1em}\selectfont]{#1}}
+
+\input{macros}
+\input{rulecommands}
+
+\mode<presentation>
+{ 
+	\usetheme{AnnArbor}
+    \usecolortheme{default}
+    \usefonttheme{structurebold}
+}
+
+%gets rid of bottom navigation bars
+\setbeamertemplate{footline}[frame number]{}
+
+%gets rid of bottom navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+%gets rid of footer
+%will override 'frame number' instruction above
+%comment out to revert to previous/default definitions
+\setbeamertemplate{footline}{}
+
+\title[Computer Science Honors Thesis]{Pattern Matching with Typed Holes}
+\author{Yongwei Yuan, \underline{Scott Guest}, Eric Griffis, Hannah Potter, David Moon, Cyrus Omar}
+\institute{University of Michigan}
+\date{8 April 2022}
+
+\begin{document}
+\begin{frame}
+\titlepage
+\end{frame}
+
+%\begin{frame}
+%	\frametitle{Sum Types}
+%	\begin{itemize}
+%		\item Sum types give an "or" of types - similar to enums, but each tag can also hold data
+%		\medskip
+%		\begin{itemize}
+%			\item Type: \li{sum \{Good([Int]) + Error(String)\}}
+%			\medskip
+%			\item Values: \li{Good([])}, \li{Good([1, 2, 3, 4])}, \li{Error("bad list")}, ...
+%		\end{itemize}
+%		\medskip
+%		\item Linked lists are sum types with special syntax
+%		\medskip
+%		\begin{itemize}
+%			\item \li{IntList} defined as \li{sum \{Node(Int, IntList) + Empty\}}
+%			\medskip
+%			\item \li{Node(hd, tl)} written as \li{hd::tl}
+%			\medskip
+%			\item \li{Empty} written as \li{[]}
+%			\medskip
+%			\item \li{[1, 2, 3, 4]} desguars to \li{1::2::3::4::[]}
+%		\end{itemize}
+%	\end{itemize}
+%\end{frame}
+
+%\begin{frame}
+%\frametitle{Pattern Matching}
+%\begin{itemize}
+%\item A pattern specifies a certain "shape" for values of a sum type, with variables akin to wildcards
+%\medskip
+%\begin{itemize}
+%	\item \li{[1, 2, 3, 4]} matches the pattern \li{hd::tl}
+%	\medskip
+%	\item \li{[1]} does not match the pattern \li{x::y::tl}
+%	\medskip
+%	\item \li{Good([1, 2, 3, 4])} matches the pattern \li{Good(x::y::tl)}
+%	\medskip
+%	\item \li{Error("bad list")} does not match the pattern \li{Good(xs)}
+%\end{itemize}
+%\medskip
+%\item Match expressions compare a scrutinee against a sequence of patterns, selecting the branch of the first pattern that matches
+%\medskip
+%\item Exhaustiveness - every expression matches at least one pattern
+%\medskip
+%\item Irredundancy - every pattern is matched by at least one expression
+%\end{itemize}
+%\end{frame}
+
+\begin{frame}
+\frametitle{Pattern Matching}
+\begin{itemize}
+\item A pattern specifies a particular "shape" than an expression can take, with variables treated as wildcards
+\medskip
+\item Match expressions compares a \emph{scrutinee} against a sequence of \emph{rules}, where each rule consists of a pattern and a branch expression.
+\medskip
+\begin{itemize}
+\item Proceeds top down, evaluating to the branch expression of the first matched pattern
+\end{itemize}
+\medskip
+\item Exhaustiveness - every expression matches at least one pattern
+\medskip
+\item Irredundancy - every pattern is matched by at least one expression
+\end{itemize}
+\end{frame}
+\begin{frame}
+	\frametitle{Typed Holes}
+	\begin{itemize}
+	\item Problem: Editor services struggle to deal with unfinished programs because they are formally meaningless
+	\medskip
+	\item Hazel represents unfinished programs as terms with holes 
+	\medskip
+		\begin{itemize}
+			\item Empty holes $\hehole{u}$ indicate missing syntactic pieces 
+			\medskip
+			\item Non-empty holes $\hhole{e}{u}$ surround semantic inconsistencies 
+		\end{itemize}
+	\medskip
+	\item Maximal Liveness - Every editor state has static and dynamic meaning
+	\medskip
+	\item Give terms as much meaning as possible, being conservative with respect to all hole-fillings
+	\end{itemize}
+%	\begin{figure}
+%		\centering
+%		\includegraphics[scale=0.47,valign=t]{imgs/arith-initial.png}%
+%%		\hfill
+%%		\includegraphics[scale=0.47,valign=t]{imgs/arith-partial.png}%
+%		\caption{Live Evaluation with Expression Holes}
+%	\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Pattern Matching with Holes}
+\begin{itemize}
+\item Use empty pattern holes $\heholep{w}$ and non-empty pattern holes $\hholep{p}{w}{\tau}$ to represent intermediate pattern edit states\\
+\medskip
+\item $\hpatmatch{e}{p}{\theta}$ - in all hole-fillings, $e$ matches $p$, emitting bindings $\theta$\\
+
+\begin{itemize}
+\item $1::\hehole{u}::[~]$ must match $hd :: tl$, binding $hd$ to $1$ and $tl$ to $\hehole{u}::[~]$
+\end{itemize}
+\medskip
+\item $\hnotmatch{e}{p}$ - in all hole-fillings, $e$ does not match $p$\\
+
+\begin{itemize}
+\item $1::[~]$ must not match $x::\heholep{w}::tl$
+\end{itemize}
+\medskip
+\item $\hmaymatch{e}{p}$ - depending on the hole-filling, $e$ may or may not match $p$\\
+
+\begin{itemize}
+\item $1::[~]$ indeterminately matches $\heholep{w}::[~]$\\
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Pattern Matching with Holes}
+\begin{figure}
+	\centering
+	% Capture tallest image in box 2
+	\setbox2=\hbox{\includegraphics[scale=0.5]{imgs/pat_match_pat_holes.png}}%
+	\subcaptionbox{Expression Holes\label{fig:exp-hole}}{
+		\raisebox{\dimexpr\ht2-\height}{
+			\includegraphics[scale=0.5,valign=t]{imgs/pat_match_exp_holes.png}
+			\vphantom{\includegraphics[scale=0.47,valign=t]{imgs/pat_match_exp_holes.png}}
+		}
+	}
+	\hfil
+	\subcaptionbox{Pattern Holes\label{fig:pat-hole}}{
+		\includegraphics[scale=0.5,valign=t]{imgs/pat_match_pat_holes.png}
+	}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{The Peanut Calculus}
+\begin{itemize}
+\item Lambda calculus with numbers, binary products, and binary sums
+\item Represent intermediate match states with a "zippered" list of rules
+\end{itemize}
+\input{fig-syntax}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Dynamic Semantics}
+	\input{fig-final}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Dynamic Semantics}
+	\input{fig-step}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Exhaustiveness and Redundancy}
+	\begin{itemize}
+		\item Necessarily Exhaustive - exhaustive in every hole-filling
+		\item Necessarily Inexhaustive - inexhaustive in every hole-filling
+		\item Indeterminately Exhaustive - exhaustive in some hole-fillings but inexhaustive in others
+	\end{itemize}
+	\begin{figure}
+		\centering
+		\includegraphics[scale=0.5]{imgs/maybe_exhaustive.png}
+		\hfil
+		\includegraphics[scale=0.5]{imgs/not_exhaustive.png}
+	\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Constraint Language}
+\input{fig-constraint}
+\begin{itemize}
+\item Each pattern $p$ emits a constraint $\xi$ describing the restriction $p$ places on expressions that match it.
+\medskip
+\begin{itemize}
+	\item $x$ and $\_$ emit $\ctruth$
+	\medskip
+	\item $\heholep{w}$ and $\hholep{p}{w}{\tau}$ emit $\cunknown$
+	\medskip
+	\item If $p_1$ emits $\xi_1$ and $p_2$ emits $\xi_2$, then $\hpair{p_1}{p_2}$ emits $\cpair{\xi_1}{\xi_2}$
+\end{itemize}
+\medskip
+\item A sequence of rules emits the $\lor$ of constraints emitted by each rule.
+\medskip
+\item The dual $\cdual{\xi}$ represents negation
+\medskip
+\begin{itemize}
+	\item $\cdual{\cnum{n}} = \cnotnum{n}$
+	\medskip
+	\item $\cdual{\cinl{\xi}} = \cor{\cinr{\ctruth}}{\cinl{\cdual{\xi}}}$
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Constraint Satisfaction}
+\begin{itemize}
+\item For an expression $e$ and constraint $\xi$,
+\begin{itemize}
+	\item $\csatisfy{e}{\xi}$ - $e$ satisfies $\xi$
+	\item $\cmaysatisfy{e}{\xi}$ - $e$ may satisfy $\xi$ (due to holes in $e$ or $\cunknown$ in $\xi$)
+	\item $\csatisfyormay{e}{\xi}$ - $e$ satisfies or may satisfy $\xi$
+\end{itemize}
+\medskip
+
+\item Possible Exhaustiveness - Every expression possibly matches at least one pattern in the sequence
+\begin{itemize}
+\item If the rules emit $\xi_{rs}$, then all expressions $e$ have $\csatisfyormay{e}{\xi_{rs}}$.
+\end{itemize}
+\medskip
+
+\item Necessary Redundancy - Every expression possibly matching $p$ also must match a previous pattern $p^\prime$
+\begin{itemize}
+	\item If the previous rules emit $\xi_{pre}$ and the current rule emits $\xi_r$, then every expression $e$ with $\csatisfyormay{e}{\xi_r}$ also has $\csatisfy{e}{\xi_{pre}}$.
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Constraint Entailment}
+\begin{itemize}
+\item Redundancy and exhaustiveness can be stated as a form of entailment between constraints
+\medskip
+\item Indeterminate Entailment - $\csatisfy{\xi_1}{\xi_2}$ if $\csatisfyormay{e}{\xi_1}$ implies $\csatisfy{e}{\xi_2}$.
+\smallskip
+\begin{itemize}
+	\item $\xi_r$ is necessarily redundant with respect to $\xi_{pre}$ if $\csatisfy{\xi_r}{\xi_{pre}}$
+\end{itemize}
+\medskip
+\item Possible Entailment - $\csatisfyormay{\xi_1}{\xi_2}$ if $\csatisfyormay{e}{\xi_1}$ implies $\csatisfyormay{e}{\xi_2}$
+\smallskip
+\begin{itemize}
+\item $\xi$ is possibly exhaustive if $\csatisfyormay{\ctruth}{\xi}$
+\end{itemize}
+\medskip
+\item Problem: How do we actually decide this?
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Eliminating Indeterminacy}
+\begin{itemize}
+\item Consider the "most general" hole-fillings to eliminate indeterminacy
+\begin{itemize}
+	\item $\ctruify{\xi_1} = \xi_2$ - replace every instance of $\cunknown$ with $\ctruth$
+	\item $\cfalsify{\xi_1} = \xi_2$ - replace every instance of $\cunknown$ with $\cfalsity$
+\end{itemize}
+
+\medskip
+\item $\xi$ is possibly exhaustive if and only if $\ctruify{\xi}$ is exhaustive
+\medskip
+\item $\xi_r$ is necessarily redundant with respect to $\xi_{pre}$ if and only if $\ctruify{\xi_r}$ is redundant with respect to $\cfalsify{\xi_{pre}}$
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.5]{imgs/not_exhaustive.png}
+	\hfil
+	\includegraphics[scale=0.5]{imgs/redundant.png}
+\end{figure}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Constraint Validity}
+\begin{itemize}
+\item Inspiration: In classical logic, $P \implies Q$ if and only if $\neg P \lor Q$
+\medskip
+\item Constraint Validity - Suppose $\xi$ contains no instances of the $?$ constraint. Then $\csatisfy{\;}{\xi}$ if for every $\isVal{e}$ we have $\csatisfy{e}{\xi}$
+\medskip
+\item Material Implication - If $\xi_1$ and $\xi_2$ contain no instances of $?$, then $\csatisfy{\xi_1}{\xi_2}$ if and only if $\csatisfy{\;}{\cor{\cdual{\xi_1}}{\xi_2}}$
+\medskip
+\item Redundancy - $\csatisfy{\xi_1}{\xi_2}$ if and only if $\csatisfy{\;}{\cor{\cdual{\ctruify{\xi_1}}}{\cfalsify{\xi_2}}}$
+\medskip
+\item Exhaustiveness - $\csatisfyormay{\top}{\xi}$ if and only if $\csatisfy{\;}{\ctruify{\xi}}$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Decision Procedure}
+\begin{itemize}
+\item For every expression $e$, either $\csatisfy{e}{\xi}$ or $\csatisfy{e}{\cdual{\xi}}$, but not both
+\medskip
+\item $\csatisfy{\;}{\xi}$ if and only if nothing satisfies $\cdual{\xi}$, i.e. if $\cdual{\xi}$ is inconsistent
+\medskip
+\item $\csatisfyormay{\ctruth}{\xi_{rs}} \iff \csatisfy{\;}{\ctruify{\xi_{rs}}} \iff \cincon{\cdual{\ctruify{\xi_{rs}}}}$
+\medskip
+\item $\csatisfy{\xi_r}{\xi_{pre}} \iff \csatisfy{\;}{\cor{\cdual{\ctruify{\xi_1}}}{\cfalsify{\xi_2}}} \iff \cincon{\cdual{\cor{\cdual{\ctruify{\xi_1}}}{\cfalsify{\xi_2}}}}$
+\bigskip
+\item Reason about inconsistent sets to handle boolean combinations
+\medskip 
+\begin{itemize}
+\item For $\xi_1 \land \xi_2 \land \xi_3$, consider $\{\xi_1, \xi_2, \xi_3 \}$
+\medskip
+\item For $\xi_1 \land (\xi_2 \lor \xi_3)$, consider $\{\xi_1, \xi_2\}$ and $\{\xi_1, \xi_3\}$.
+\end{itemize}
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Decision Procedure}
+	\input{fig-incon}
+\end{frame}
+
+\begin{frame}
+\frametitle{Mechanization}
+\begin{itemize}
+\item Proofs are often difficult to verify, tedious, and casework-heavy
+\medskip
+\begin{itemize}
+	\item Yongwei intially typed out $\sim 150$ pages of proofs!
+\end{itemize}
+\medskip
+\item Agda proof-assistant allows us to mechanize our proofs, and type-checking shows correctness
+\medskip
+\item Use fancy dependent type system in order to
+\medskip
+\begin{itemize}
+	\item encode each judgement as a type whose terms are derivations
+	\medskip
+	\item encode each theorem as a type whose terms are proofs
+\end{itemize}
+\medskip
+\item A function $f : P \to Q$ proves an implication - it gives you a proof of $Q$ whenever you give it a proof of $P$
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Mechanization}
+\begin{lemma}[Matching Determinism]
+	\label{lemma:match-determinism}
+	If $\isFinal{e}$ and $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\hpattyp{p}{\tau}{\Gamma}{\Delta}$ then exactly one of the following holds
+	\begin{enumerate}
+		\item $\hpatmatch{e}{p}{\theta}$ for some $\theta$
+		\item $\hmaymatch{e}{p}$
+		\item $\hnotmatch{e}{p}$
+	\end{enumerate}
+\end{lemma}
+
+\begin{lemma}[Matching Coherence of Constraint]
+	\label{lemma:const-matching-coherence}
+	Suppose that $\hexptyp{\cdot}{\Delta_e}{e}{\tau}$ and $\isFinal{e}$ and $\chpattyp{p}{\tau}{\xi}{\Gamma}{\Delta}$. Then we have
+	\begin{enumerate}
+		\item $\csatisfy{e}{\xi}$ iff $\hpatmatch{e}{p}{\theta}$
+		\item $\cmaysatisfy{e}{\xi}$ iff $\hmaymatch{e}{p}$
+		\item $\cnotsatisfyormay{e}{\xi}$ iff $\hnotmatch{e}{p}$
+	\end{enumerate}
+\end{lemma}
+\end{frame}
+
+\begin{frame}
+\frametitle{Mechanization}
+\begin{theorem}[Exclusiveness of Constraint Satisfaction]
+	\label{theorem:exclusive-constraint-satisfaction}
+	If $\ctyp{\xi}{\tau}$ and $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isFinal{e}$ then exactly one of the following holds
+	\begin{enumerate}
+		\item $\csatisfy{e}{\xi}$
+		\item $\cmaysatisfy{e}{\xi}$
+		\item $\cnotsatisfyormay{e}{\xi}$
+	\end{enumerate}
+\end{theorem}
+
+\begin{theorem}[Exclusiveness of Satisfaction Judgment]
+	\label{theorem:exclusive-complete-constraint-satisfaction}
+	If $\ctyp{\xi}{\tau}$ and $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\isVal{e}$ then exactly one of the following holds
+	\begin{enumerate}
+		\item $\ccsatisfy{e}{\xi}$
+		\item $\ccsatisfy{e}{\cdual{\xi}}$
+	\end{enumerate}
+\end{theorem}
+\end{frame}
+
+\begin{frame}
+\frametitle{Mechanization}
+\begin{theorem}[Deterministic Progress]
+	\label{theorem:determinism}
+	If $\hexptyp{\cdot}{\Delta}{e}{\tau}$ then exactly one of the following holds
+	\begin{enumerate}
+		\item $\isVal{e}$
+		\item $\isIndet{e}$
+		\item $\htrans{e}{e'}$ for some unique $e'$
+	\end{enumerate}
+\end{theorem}
+\begin{theorem}[Preservation]
+	\label{theorem:preservation}
+	If $\hexptyp{\cdot}{\Delta}{e}{\tau}$ and $\htrans{e}{e'}$
+	then $\hexptyp{\cdot}{\Delta}{e'}{\tau}$
+\end{theorem}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+Thank you for listening!
+\end{center}
+\end{frame}
+
+\end{document}
+
+%%

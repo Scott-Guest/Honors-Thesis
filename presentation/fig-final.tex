@@ -1,0 +1,72 @@
+% !TeX root = presentation.tex
+
+\begin{figure}[th]
+\judgbox{\isVal{e}}{$e$ is a value}
+\scalebox{0.9}{
+\medskip
+\begin{mathpar}
+\Infer{\VNum}{ }{
+  \isVal{\hnum{n}}
+}
+
+\Infer{\VPair}{
+  \isVal{e_1} \\
+  \isVal{e_2}
+}{
+  \isVal{\hpair{e_1}{e_2}}
+}
+
+\Infer{\VLam}{ }{
+	\isVal{\hlam{x}{\tau}{e}}
+}
+
+\end{mathpar}
+}
+\bigskip\\
+
+\judgbox{\isIndet{e}}{$e$ is indeterminate}
+\medskip
+\scalebox{0.9}{
+\begin{mathpar}
+\Infer{\IAp}{
+ \isIndet{e_1} \\ \isFinal{e_2}
+}{
+ \isIndet{\hap{e_1}{e_2}}
+}
+
+%\Infer{\IFst}{
+% \isIndet{e} \\ e \neq \hpair{e_1}{e_2}
+%}{
+% \isIndet{\hfst{e}}
+%}
+
+\Infer{\IMatch}{
+  \isFinal{e} \\
+  \hmaymatch{e}{p_r}
+}{
+  \isIndet{
+    \hmatch{e}{\zruls{rs_{pre}}{\hrulP{p_r}{e_r}}{rs_{post}}}
+  }
+}
+\end{mathpar}
+}
+\bigskip\\
+
+\judgbox{\isFinal{e}}{$e$ is final}
+\medskip
+\scalebox{0.9}{
+\begin{mathpar}
+\Infer{\FVal}{
+  \isVal{e}
+}{
+  \isFinal{e}
+}
+
+\Infer{\FIndet}{
+  \isIndet{e}
+}{
+  \isFinal{e}
+}
+\end{mathpar}
+}
+\end{figure}

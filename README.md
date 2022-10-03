@@ -2,7 +2,7 @@
 
 This repository contains a report of my work on extending the [Hazel language](hazel.org) with a pattern matching feature that maintains the "maximal liveness" invariant.
 
-A corresponding Agda mechanization can be found [here](https://github.com/hazelgrove/patterns-agda).
+The PDF report can be found [here](thesis.pdf), and a corresponding Agda mechanization can be found [here](https://github.com/hazelgrove/patterns-agda).
 
 This thesis was submitted in fulfillment of the requirements for a B.S. in Honors Computer Science and was awarded Highest Honors.
 
